@@ -1,32 +1,53 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
+  Image,
   TextInput,
   View,
 } from "react-native";
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
 import { Button } from "../../components/Button";
 import { colors, radius, spacing, typography } from "../../theme";
+
+WebBrowser.maybeCompleteAuthSession();
 
 type Role = "passenger" | "driver";
 
 interface Props {
   onBack: () => void;
   onLogin: (role: Role) => void;
+  onGoogleLogin?: (role: Role, idToken: string) => void;
   onCreateAccount: () => void;
 }
 
 export default function LoginScreen({
   onBack,
   onLogin,
+  onGoogleLogin,
   onCreateAccount,
 }: Props) {
   const [role, setRole] = useState<Role>("passenger");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "missing",
+    androidClientId:
+      process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "missing",
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? "missing",
+  });
+
+  useEffect(() => {
+    if (response?.type === "success") {
+      const idToken = response.params.id_token;
+      if (idToken) onGoogleLogin?.(role, idToken);
+    }
+  }, [response]);
 
   const canSubmit =
     phone.replace(/\s/g, "").length >= 9 && password.length >= 6;
@@ -117,6 +138,33 @@ export default function LoginScreen({
           onPress={() => onLogin(role)}
         />
 
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or continue with</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <Pressable
+          onPress={() => promptAsync()}
+          disabled={!request}
+          style={({ pressed }) => [
+            styles.googleButton,
+            (pressed || !request) && { opacity: 0.6 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Sign in with Google"
+        >
+          <View style={styles.googleBadge}>
+            <Image
+              source={require("../../../assets/images/google.jpeg")}
+              style={styles.googleLogo}
+              resizeMode="contain"
+            />
+            {/* <Text style={styles.googleG}>G</Text> */}
+          </View>
+          <Text style={styles.googleText}>Continue with Google</Text>
+        </Pressable>
+
         <Text style={styles.footerText}>
           Don’t have an account?{" "}
           <Text style={styles.linkText} onPress={onCreateAccount}>
@@ -195,4 +243,37 @@ const styles = StyleSheet.create({
     color: colors.blue,
     fontWeight: "700",
   },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: spacing.xl,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.line },
+  dividerText: {
+    ...typography.body,
+    color: colors.muted,
+    marginHorizontal: spacing.md,
+  },
+  googleButton: {
+    height: 56,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.white,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  googleBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.blueMist,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.md,
+  },
+//   googleG: { fontSize: 15, fontWeight: "800", color: "#4285F4" },
+  googleLogo: { width: 20, height: 20 },
+  googleText: { ...typography.label, color: colors.ink },
 });
