@@ -6,5 +6,5 @@ export const GALLERY_IMAGES: ImageSourcePropType[] = [
   require('../../assets/images/Kigali - Rwanda.jpeg'),
   require('../../assets/images/Rwanda.jpeg'),
   require('../../assets/images/stadium.jpeg'),
-  require('../../assets/images/google.jpeg'),
+  // require('../../assets/images/google.jpeg'),
 ];
