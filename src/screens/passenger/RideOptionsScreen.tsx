@@ -42,9 +42,18 @@ interface Props {
   /** Pass null to hide surge pricing. */
   surge?: Surge | null;
   onBack?: () => void;
-  onConfirm: (tier: RideTierId) => void | Promise<void>;
+  onConfirm: (tier: RideTierId, price: number) => void | Promise<void>;
   onChangePayment?: () => void;
   onPromoPress?: () => void;
+  /** The passenger's selected payment method. */
+  payment?: PaymentInfo;
+}
+
+interface PaymentInfo {
+  badge: string;
+  badgeColor: string;
+  title: string;
+  subtitle?: string;
 }
 
 // Palette
@@ -69,6 +78,12 @@ const DEFAULT_DESTINATION: Place = {
   subtitle: "",
 };
 const DEFAULT_SURGE: Surge = { multiplier: 1.2, area: "Remera" };
+const DEFAULT_PAYMENT: PaymentInfo = {
+  badge: "MoMo",
+  badgeColor: "#2447FF",
+  title: "MTN MoMo",
+  subtitle: "078 ••• 456",
+};
 
 interface TierMeta {
   label: string;
@@ -95,6 +110,7 @@ export default function RideOptionsScreen({
   onConfirm,
   onChangePayment,
   onPromoPress,
+  payment = DEFAULT_PAYMENT,
 }: Props) {
   const insets = useSafeAreaInsets();
   const [tierId, setTierId] = useState<RideTierId>(initialTier);
@@ -129,7 +145,7 @@ export default function RideOptionsScreen({
     if (submitting) return;
     setSubmitting(true);
     try {
-      await onConfirm(selected.tier.id);
+      await onConfirm(selected.tier.id, selected.price);
     } finally {
       setSubmitting(false);
     }
@@ -270,12 +286,16 @@ export default function RideOptionsScreen({
             accessibilityRole="button"
             accessibilityLabel="Change payment method"
           >
-            <View style={styles.momo}>
-              <Text style={styles.momoText}>MoMo</Text>
+            <View
+              style={[styles.momo, { backgroundColor: payment.badgeColor }]}
+            >
+              <Text style={styles.momoText}>{payment.badge}</Text>
             </View>
             <View style={styles.flex}>
-              <Text style={styles.detailTitle}>MTN MoMo</Text>
-              <Text style={styles.detailSub}>078 ••• 456</Text>
+              <Text style={styles.detailTitle}>{payment.title}</Text>
+              {!!payment.subtitle && (
+                <Text style={styles.detailSub}>{payment.subtitle}</Text>
+              )}
             </View>
             <Text style={styles.change}>Change</Text>
           </Pressable>

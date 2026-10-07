@@ -5,3 +5,8 @@ export { default as PhoneOtpScreen } from './PhoneOtpScreen';
 export { default as HomeScreen } from './HomeScreen';
 export { default as RideOptionsScreen } from "./RideOptionsScreen";
 export { default as SearchingDriverScreen } from "./SearchingDriverScreen";
+export { default as RidePaymentScreen } from "./RidePaymentScreen";
+export { default as PaymentScreen } from "./PaymentScreen";
+export { default as ProfileScreen } from "./ProfileScreen";
+export { default as SettingsScreen } from "./SettingsScreen";
+export { default as MyRideScreen } from "./MyRideScreen";

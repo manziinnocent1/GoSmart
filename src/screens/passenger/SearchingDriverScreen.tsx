@@ -57,6 +57,12 @@ interface Props {
   /** Seconds before showing the "no drivers available" state. */
   timeoutSeconds?: number;
   onCancel: () => void;
+  /** Called when the passenger taps Confirm on the driver-found screen. */
+  onConfirm?: () => void;
+  /** True once the ride is paid or confirmed. */
+  paid?: boolean;
+  /** Called when a driver is found, so the parent can keep it between screens. */
+  onDriverFound?: (driver: Driver) => void;
 }
 
 // Palette
@@ -250,11 +256,14 @@ function TripCard({
   title,
   route,
   status,
+  action,
 }: {
   Icon: LucideIcon;
   title: string;
   route: string;
   status: string;
+  /** When set, a button replaces the status text. */
+  action?: { label: string; onPress: () => void };
 }) {
   return (
     <View style={styles.tripCard}>
@@ -267,10 +276,24 @@ function TripCard({
           {route}
         </Text>
       </View>
-      <View style={styles.statusRow}>
-        <View style={styles.statusDot} />
-        <Text style={styles.statusText}>{status}</Text>
-      </View>
+      {action ? (
+        <Pressable
+          onPress={action.onPress}
+          style={({ pressed }) => [
+            styles.confirmBtn,
+            pressed && { opacity: 0.85 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={action.label}
+        >
+          <Text style={styles.confirmBtnText}>{action.label}</Text>
+        </Pressable>
+      ) : (
+        <View style={styles.statusRow}>
+          <View style={styles.statusDot} />
+          <Text style={styles.statusText}>{status}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -288,6 +311,9 @@ export default function SearchingDriverScreen({
   matchAfterSeconds = 7,
   timeoutSeconds = 90,
   onCancel,
+  onConfirm,
+  paid = false,
+  onDriverFound,
 }: Props) {
   const insets = useSafeAreaInsets();
   const meta = TIER_META[tier] ?? TIER_META.moto;
@@ -295,6 +321,8 @@ export default function SearchingDriverScreen({
   const [elapsed, setElapsed] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const [simulated, setSimulated] = useState<Driver | null>(null);
+  const foundRef = useRef(onDriverFound);
+  foundRef.current = onDriverFound;
 
   const driver = driverProp ?? simulated;
   const searching = !driver && elapsed < timeoutSeconds;
@@ -310,10 +338,11 @@ export default function SearchingDriverScreen({
   // Demo: pretend a driver accepts after a few seconds
   useEffect(() => {
     if (driverProp || matchAfterSeconds == null) return;
-    const id = setTimeout(
-      () => setSimulated(MOCK_DRIVERS[tier] ?? MOCK_DRIVERS.moto),
-      matchAfterSeconds * 1000,
-    );
+    const id = setTimeout(() => {
+      const found = MOCK_DRIVERS[tier] ?? MOCK_DRIVERS.moto;
+      setSimulated(found);
+      foundRef.current?.(found);
+    }, matchAfterSeconds * 1000);
     return () => clearTimeout(id);
   }, [attempt, driverProp, matchAfterSeconds, tier]);
 
@@ -380,7 +409,9 @@ export default function SearchingDriverScreen({
           >
             <View style={styles.foundPill}>
               <View style={styles.statusDot} />
-              <Text style={styles.foundPillText}>Driver found</Text>
+              <Text style={styles.foundPillText}>
+                {paid ? "Ride confirmed" : "Driver found"}
+              </Text>
             </View>
             <Text style={styles.foundTitle}>
               Arriving in {driver.etaMinutes} min
@@ -458,7 +489,7 @@ export default function SearchingDriverScreen({
               <View style={styles.flex}>
                 <Text style={styles.pinTitle}>Your trip PIN</Text>
                 <Text style={styles.pinSub}>
-                  Tell this PIN to your driver to start the trip
+                  You'll need this PIN to confirm payment and to start the trip
                 </Text>
               </View>
               <View style={styles.pinBoxes}>
@@ -474,8 +505,18 @@ export default function SearchingDriverScreen({
               Icon={meta.Icon}
               title={tripTitle}
               route={route}
-              status="Confirmed"
+              status={paid ? "Paid" : "Pending"}
+              action={
+                paid || !onConfirm
+                  ? undefined
+                  : { label: "Confirm", onPress: onConfirm }
+              }
             />
+            {!paid && !!onConfirm && (
+              <Text style={styles.confirmHint}>
+                Confirm your ride and pay to lock in your driver.
+              </Text>
+            )}
 
             <Pressable
               onPress={shareTrip}
@@ -673,6 +714,20 @@ const styles = StyleSheet.create({
   },
   statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: GREEN },
   statusText: { color: GREEN, fontSize: 14, fontWeight: "800" },
+  confirmBtn: {
+    backgroundColor: GREEN,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    marginLeft: 8,
+  },
+  confirmBtnText: { color: WHITE, fontSize: 14, fontWeight: "800" },
+  confirmHint: {
+    color: MUTED,
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: -2,
+  },
 
   // Buttons
   primaryBtn: {
