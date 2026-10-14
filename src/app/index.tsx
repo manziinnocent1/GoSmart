@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ReactElement } from "react";
+import { router } from "expo-router";
 import { Alert, StyleSheet, View } from "react-native";
 import {
   SafeAreaInsetsContext,
@@ -113,6 +114,7 @@ function App() {
           <SplashScreen
             onGetStarted={() => setStep("register")}
             onSignIn={() => setStep("login")}
+            onAdminSignIn={() => router.push("/admin")}
           />
         );
       case "register":

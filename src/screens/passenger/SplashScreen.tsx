@@ -24,9 +24,14 @@ const SHEET_OVERLAP = 36;
 interface Props {
   onGetStarted: () => void;
   onSignIn: () => void;
+  onAdminSignIn: () => void;
 }
 
-export default function SplashScreen({ onGetStarted, onSignIn }: Props) {
+export default function SplashScreen({
+  onGetStarted,
+  onSignIn,
+  onAdminSignIn,
+}: Props) {
   const [language, setLanguage] = useState<Language>("EN");
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
@@ -41,7 +46,7 @@ export default function SplashScreen({ onGetStarted, onSignIn }: Props) {
       <View style={[styles.hero, { height: heroHeight }]}>
         <Image
           source={KIGALI_MAP}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           resizeMode="cover"
         />
         <View style={styles.scrim} />
@@ -114,6 +119,13 @@ export default function SplashScreen({ onGetStarted, onSignIn }: Props) {
         <Text style={styles.legal}>
           By continuing you accept our Terms and Privacy Policy.
         </Text>
+        <Pressable
+          onPress={onAdminSignIn}
+          accessibilityRole="button"
+          style={styles.adminPreview}
+        >
+          <Text style={styles.adminPreviewText}>Admin sign in</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -123,7 +135,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.white },
   hero: { width: "100%", backgroundColor: colors.ink },
   scrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,7,12,0.5)",
   },
   topRow: {
@@ -235,4 +247,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: spacing.xs,
   },
+  adminPreview: { alignSelf: "center", paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+  adminPreviewText: { color: colors.muted, fontSize: 11, fontWeight: "700" },
 });

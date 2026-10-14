@@ -20,7 +20,7 @@ type Role = "passenger" | "driver";
 
 interface Props {
   onBack: () => void;
-  onLogin: (role: Role) => void;
+  onLogin: (role: Role, email: string, password: string) => void;
   onGoogleLogin?: (role: Role, idToken: string) => void;
   onCreateAccount: () => void;
 }
@@ -32,7 +32,7 @@ export default function LoginScreen({
   onCreateAccount,
 }: Props) {
   const [role, setRole] = useState<Role>("passenger");
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
@@ -47,10 +47,10 @@ export default function LoginScreen({
       const idToken = response.params.id_token;
       if (idToken) onGoogleLogin?.(role, idToken);
     }
-  }, [response]);
+  }, [onGoogleLogin, response, role]);
 
   const canSubmit =
-    phone.replace(/\s/g, "").length >= 9 && password.length >= 6;
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && password.length >= 6;
 
   return (
     <SafeAreaView style={styles.root}>
@@ -109,12 +109,16 @@ export default function LoginScreen({
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Phone number</Text>
+          <Text style={styles.label}>Email</Text>
           <TextInput
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            placeholder="788 123 456"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="off"
+            textContentType="none"
+            autoCorrect={false}
+            placeholder="you@example.com"
             placeholderTextColor={colors.muted}
             style={styles.input}
           />
@@ -125,6 +129,8 @@ export default function LoginScreen({
           <TextInput
             value={password}
             onChangeText={setPassword}
+            autoComplete="off"
+            textContentType="none"
             placeholder="Enter your password"
             placeholderTextColor={colors.muted}
             secureTextEntry
@@ -135,7 +141,7 @@ export default function LoginScreen({
         <Button
           label="Log in"
           disabled={!canSubmit}
-          onPress={() => onLogin(role)}
+          onPress={() => onLogin(role, email.trim(), password)}
         />
 
         <View style={styles.dividerRow}>
