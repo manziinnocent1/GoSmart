@@ -256,18 +256,26 @@ function MetricCard({
   caption,
   icon: Icon,
   accent,
+  compact = false,
 }: {
   label: string;
   value: string;
   caption: string;
   icon: any;
   accent: string;
+  compact?: boolean;
 }) {
   return (
-    <View style={styles.metricCard}>
+    <View style={[styles.metricCard, compact && styles.metricCardCompact]}>
       <View style={styles.metricTop}>
         <Text style={styles.metricLabel}>{label}</Text>
-        <View style={[styles.metricIcon, { backgroundColor: accent + "16" }]}>
+        <View
+          style={[
+            styles.metricIcon,
+            compact && styles.metricIconCompact,
+            { backgroundColor: accent + "16" },
+          ]}
+        >
           <Icon size={19} color={accent} />
         </View>
       </View>
@@ -604,13 +612,16 @@ export default function SupportInboxScreen({
         </View>
 
         {/* METRICS */}
-        <View style={styles.metricsRow}>
+        <View
+          style={[styles.metricsRow, isCompact && styles.metricsRowCompact]}
+        >
           <MetricCard
             label="Open tickets"
             value={String(openCount)}
             caption="Awaiting resolution"
             icon={MessageCircle}
             accent={COLORS.green}
+            compact={isCompact}
           />
           <MetricCard
             label="Urgent cases"
@@ -618,6 +629,7 @@ export default function SupportInboxScreen({
             caption="Priority attention"
             icon={AlertCircle}
             accent={COLORS.red}
+            compact={isCompact}
           />
           <MetricCard
             label="Resolved tickets"
@@ -627,6 +639,7 @@ export default function SupportInboxScreen({
             caption="Marked as solved"
             icon={CheckCircle2}
             accent="#4384E8"
+            compact={isCompact}
           />
         </View>
 
@@ -1198,6 +1211,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 
+  metricsRowCompact: {
+    gap: 9,
+  },
+
   metricCard: {
     flex: 1,
     minWidth: 0,
@@ -1208,6 +1225,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
 
+  metricCardCompact: {
+    padding: 12,
+  },
+
   metricTop: {
     flexDirection: "row",
     alignItems: "center",
@@ -1216,6 +1237,8 @@ const styles = StyleSheet.create({
   },
 
   metricLabel: {
+    flex: 1,
+    minWidth: 0,
     color: COLORS.muted,
     fontSize: 12,
     fontWeight: "600",
@@ -1225,10 +1248,15 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 11,
+    flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
   },
 
+  metricIconCompact: {
+    width: 30,
+    height: 30,
+  },
   metricValue: {
     fontSize: 29,
     fontWeight: "800",
