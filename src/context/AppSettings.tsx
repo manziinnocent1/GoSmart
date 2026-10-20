@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import { useColorScheme } from "react-native";
+import { setApiLanguage } from "../services/api";
 
 /* ---------- Types ---------- */
 
@@ -371,13 +372,18 @@ export function AppSettingsProvider({
 }) {
   const systemScheme = useColorScheme();
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");
-  const [language, setLanguage] = useState<Language>("en");
+  const [language, setLanguageState] = useState<Language>("en");
   const [profile, setProfile] = useState<UserProfile>(INITIAL_PROFILE);
   const [methods, setMethods] = useState<PaymentMethod[]>(INITIAL_METHODS);
   const [selectedMethodId, setSelectedMethodId] = useState("mtn-456");
 
   const isDark =
     themeMode === "dark" || (themeMode === "system" && systemScheme === "dark");
+
+  const setLanguage = useCallback((nextLanguage: Language) => {
+    setLanguageState(nextLanguage);
+    setApiLanguage(nextLanguage);
+  }, []);
 
   const t = useCallback((key: Key) => STRINGS[language][key], [language]);
 
@@ -421,6 +427,7 @@ export function AppSettingsProvider({
       isDark,
       themeMode,
       language,
+      setLanguage,
       t,
       profile,
       methods,

@@ -8,12 +8,14 @@ import {
 } from "react-native-safe-area-context";
 
 import PassengerTabBar from "@/components/PassengerTabBar";
+import { apiLogin, apiRegister, clearAuthTokens } from "@/services/api";
 import type { TabId } from "@/components/PassengerTabBar";
 import {
   AppSettingsProvider,
   describeMethod,
   useAppSettings,
 } from "@/context/AppSettings";
+import type { Language } from "@/context/AppSettings";
 import type { RideTierId } from "@/constants/rideTiers";
 import { DriverHomeScreen } from "@/screens/driver";
 import {
@@ -77,7 +79,8 @@ export default function Index() {
 
 function App() {
   const insets = useSafeAreaInsets();
-  const { selectedMethod, t } = useAppSettings();
+  const { language, selectedMethod, setLanguage, setProfile, t } =
+    useAppSettings();
 
   const [step, setStep] = useState<Step>("splash");
   const [tier, setTier] = useState<RideTierId>("moto");
@@ -89,7 +92,32 @@ function App() {
   const [paymentBack, setPaymentBack] = useState<Step>("profile");
 
   const method = describeMethod(selectedMethod, t("cash"));
-  const logout = () => setStep("splash");
+  const logout = () => {
+    clearAuthTokens();
+    setStep("splash");
+  };
+
+  const completeAuthentication = (account: {
+    full_name?: string;
+    email: string;
+    phone_number?: string | null;
+    preferred_language?: Language;
+  }) => {
+    setProfile({
+      name: account.full_name ?? "",
+      email: account.email,
+      phone: account.phone_number ?? "",
+    });
+    if (account.preferred_language) setLanguage(account.preferred_language);
+    setStep("passengerHome");
+  };
+
+  const showAuthenticationError = (title: string, error: unknown) => {
+    Alert.alert(
+      title,
+      error instanceof Error ? error.message : "Please try again.",
+    );
+  };
 
   const cancelSearch = () => {
     setDriver(null);
@@ -121,9 +149,23 @@ function App() {
         return (
           <RegisterScreen
             onBack={() => setStep("splash")}
-            onCreateAccount={(role) =>
-              setStep(role === "driver" ? "driverHome" : "passengerHome")
-            }
+            onCreateAccount={async (account) => {
+              try {
+                const { user } = await apiRegister<{
+                  full_name?: string;
+                  email: string;
+                  phone_number?: string | null;
+                  preferred_language?: Language;
+                }>({
+                  ...account,
+                  preferred_language: language,
+                });
+                completeAuthentication(user);
+                if (account.role === "driver") setStep("driverHome");
+              } catch (error) {
+                showAuthenticationError("Account creation failed", error);
+              }
+            }}
             onGoToLogin={() => setStep("login")}
           />
         );
@@ -131,9 +173,20 @@ function App() {
         return (
           <LoginScreen
             onBack={() => setStep("splash")}
-            onLogin={(role) =>
-              setStep(role === "driver" ? "driverHome" : "passengerHome")
-            }
+            onLogin={async (role, email, password) => {
+              try {
+                const { user } = await apiLogin<{
+                  full_name?: string;
+                  email: string;
+                  phone_number?: string | null;
+                  preferred_language?: Language;
+                }>(email, password, role);
+                completeAuthentication(user);
+                if (role === "driver") setStep("driverHome");
+              } catch (error) {
+                showAuthenticationError("Login failed", error);
+              }
+            }}
             onCreateAccount={() => setStep("register")}
           />
         );

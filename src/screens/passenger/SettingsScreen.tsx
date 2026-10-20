@@ -24,6 +24,7 @@ import {
 import type { LucideIcon } from "lucide-react-native";
 import { normalizePhone, useAppSettings } from "../../context/AppSettings";
 import type { Language, Palette, ThemeMode } from "../../context/AppSettings";
+import { updatePreferredLanguage } from "../../services/api";
 
 interface Props {
   /** Leave out when the screen is a tab root: the back button is hidden. */
@@ -95,6 +96,18 @@ export default function SettingsScreen({ onBack, onLogout }: Props) {
     setEmail(email.trim());
     setJustSaved(true);
     timer.current = setTimeout(() => setJustSaved(false), 2000);
+  };
+
+  const changeLanguage = async (nextLanguage: Language) => {
+    setLanguage(nextLanguage);
+    try {
+      await updatePreferredLanguage(nextLanguage);
+    } catch (error) {
+      Alert.alert(
+        "Language preference not saved",
+        error instanceof Error ? error.message : "Please try again.",
+      );
+    }
   };
 
   const confirmLogout = () =>
@@ -178,7 +191,7 @@ export default function SettingsScreen({ onBack, onLogout }: Props) {
             return (
               <Pressable
                 key={lang.id}
-                onPress={() => setLanguage(lang.id)}
+                onPress={() => void changeLanguage(lang.id)}
                 style={[s.langRow, i < LANGUAGES.length - 1 && s.line]}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: active }}

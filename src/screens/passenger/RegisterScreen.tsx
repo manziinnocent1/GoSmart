@@ -15,7 +15,13 @@ type Role = "passenger" | "driver";
 
 interface Props {
   onBack: () => void;
-  onCreateAccount: (role: Role) => void;
+  onCreateAccount: (account: {
+    role: Role;
+    email: string;
+    full_name: string;
+    phone_number: string;
+    password: string;
+  }) => void;
   onGoToLogin: () => void;
 }
 
@@ -32,9 +38,11 @@ export default function RegisterScreen({
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const canSubmit =
+    /^\S+@\S+\.\S+$/.test(email.trim()) &&
     name.trim().length > 1 &&
     phone.replace(/\s/g, "").length >= 9 &&
-    password.length >= 6;
+    password.length >= 8 &&
+    password === confirmPassword;
 
   return (
     <SafeAreaView style={styles.root}>
@@ -153,7 +161,15 @@ export default function RegisterScreen({
         <Button
           label="Create account"
           disabled={!canSubmit}
-          onPress={() => onCreateAccount(role)}
+          onPress={() =>
+            onCreateAccount({
+              role,
+              email: email.trim(),
+              full_name: name.trim(),
+              phone_number: phone.trim(),
+              password,
+            })
+          }
         />
 
         <Text style={styles.footerText}>
